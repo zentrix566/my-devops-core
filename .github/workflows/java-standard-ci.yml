@@ -1,5 +1,9 @@
 name: "Enterprise Java Delivery Pipeline"
 
+# 1. 彻底消除 Node.js 20 警告：提到最顶层
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   workflow_call:
     inputs:
@@ -19,9 +23,7 @@ on:
 jobs:
   delivery:
     runs-on: ubuntu-latest
-    # 强制开启 Node.js 24 模式，消除弃用警告
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     
     steps:
       - name: "1. 代码检出"
@@ -36,7 +38,7 @@ jobs:
         with:
           java-version: ${{ inputs.java_version }}
           distribution: 'temurin'
-          cache: 'maven'
+        #   cache: 'maven' # 防止因为找不到 pom.xml 导致流程中断
 
       - name: "3. 执行模拟构建"
         id: build_step
