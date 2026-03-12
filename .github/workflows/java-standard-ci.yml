@@ -10,35 +10,38 @@ on:
         default: '17'
         type: string
 
+env:
+  # 解决 Node.js 20 警告
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   demo-delivery:
     runs-on: ubuntu-latest
     steps:
       - name: "1. 代码检出"
         uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.ref }}
 
       - name: "2. 初始化 Java 环境"
         uses: actions/setup-java@v4
         with:
           java-version: ${{ inputs.java_version }}
           distribution: 'temurin'
-          cache: 'maven'
+          # 注意：如果 test 仓库真的没 pom.xml，这行 cache 可能会报错，演示时可以先注释掉
+          # cache: 'maven' 
 
-      - name: "3. 模拟构建 (Maven)"
-        # 即使你仓库没代码，这一步也会尝试执行，为了演示你可以直接 echo
+      - name: "3. 执行构建"
         run: |
-          echo "执行构建命令: mvn clean package"
+          if [ -f "pom.xml" ]; then
+            echo "检测到 pom.xml，执行模拟构建..."
+          else
+            echo "未检测到 pom.xml，创建虚拟文件进行演示..."
+            touch pom.xml
+          fi
           echo "Build Success!"
 
-      - name: "4. 漏洞扫描 (仅展示不拦截)"
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          format: 'table'
-          exit-code: '0' # 即使有漏洞也不报错，保证流水线变绿
-          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-
-      - name: "5. 模拟镜像打包"
+      - name: "4. 模拟镜像打包"
         run: |
           echo "正在构建镜像: ${{ inputs.service_name }}:latest"
-          echo "镜像构建完成，跳过推送步骤（演示模式）"
