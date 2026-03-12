@@ -1,0 +1,46 @@
+# 这是一个“逻辑中心”，相当于 Jenkins 的共享库函数
+name: Standard Java CI
+
+on:
+  workflow_call:  # 关键：允许其他仓库调用
+    inputs:
+      service_name:
+        required: true
+        type: string
+      java_version:
+        default: '17'
+        type: string
+    secrets:
+      REGISTRY_PASSWORD:
+        required: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java_version }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      # 这里可以强制插入安全扫描，谁也绕不过去
+      - name: Security Scan (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'myapp:${{ github.sha }}'
+          exit-code: '1' # 发现高危漏洞直接挂掉流水线
+          severity: 'CRITICAL,HIGH'
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: my-reg.com/${{ inputs.service_name }}:latest
