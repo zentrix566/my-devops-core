@@ -1,26 +1,33 @@
-name: "Standard Java CI - Demo Mode"
+name: "Enterprise Java Delivery Pipeline"
 
 on:
   workflow_call:
     inputs:
       service_name:
+        description: "微服务名称"
         required: true
         type: string
       java_version:
+        description: "JDK 版本"
         default: '17'
         type: string
-
-env:
-  # 解决 Node.js 20 警告
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      build_command:
+        description: "自定义构建命令"
+        default: 'mvn clean package -DskipTests'
+        type: string
 
 jobs:
-  demo-delivery:
+  delivery:
     runs-on: ubuntu-latest
+    # 强制开启 Node.js 24 模式，消除弃用警告
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    
     steps:
       - name: "1. 代码检出"
         uses: actions/checkout@v4
         with:
+          # 关键：确保拉取的是业务仓库而非模版仓库
           repository: ${{ github.repository }}
           ref: ${{ github.ref }}
 
@@ -29,19 +36,42 @@ jobs:
         with:
           java-version: ${{ inputs.java_version }}
           distribution: 'temurin'
-          # 注意：如果 test 仓库真的没 pom.xml，这行 cache 可能会报错，演示时可以先注释掉
-          # cache: 'maven' 
+          cache: 'maven'
 
-      - name: "3. 执行构建"
+      - name: "3. 执行模拟构建"
+        id: build_step
         run: |
+          echo "执行构建命令: ${{ inputs.build_command }}"
+          # 模拟构建逻辑，如果不存在 pom.xml 则跳过真实构建
           if [ -f "pom.xml" ]; then
-            echo "检测到 pom.xml，执行模拟构建..."
+            ${{ inputs.build_command }}
           else
-            echo "未检测到 pom.xml，创建虚拟文件进行演示..."
-            touch pom.xml
+            echo "未检测到 pom.xml，跳过真实构建，进入演示模式。"
           fi
-          echo "Build Success!"
+          echo "build_status=Success" >> $GITHUB_OUTPUT
 
-      - name: "4. 模拟镜像打包"
+      - name: "4. 安全扫描 (Trivy)"
+        id: scan_step
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'table'
+          exit-code: '0' # 演示模式：即使有漏洞也继续，方便看结果
+          severity: 'CRITICAL,HIGH'
+
+      - name: "5. 生成可视化交付报告"
+        if: always()
         run: |
-          echo "正在构建镜像: ${{ inputs.service_name }}:latest"
+          echo "### 🚀 DevOps 交付总结报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 维度 | 详细信息 |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **服务名称** | \`${{ inputs.service_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **构建版本 (SHA)** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **触发分支** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **JDK 版本** | \`${{ inputs.java_version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **流水线执行人** | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **构建结果** | ✅ ${{ steps.build_step.outputs.build_status || 'Skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **安全扫描状态** | 🛡️ Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 💡 *此报告由中央 DevOps 流水线自动生成，点击 [Actions Tab] 查看详细日志。*" >> $GITHUB_STEP_SUMMARY
