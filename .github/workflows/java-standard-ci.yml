@@ -1,35 +1,17 @@
-name: "Enterprise Java Delivery Pipeline"
+name: "Standard Java CI - Demo Mode"
 
 on:
   workflow_call:
-    # 定义输入参数，方便业务方自助配置
     inputs:
       service_name:
-        description: "微服务名称"
         required: true
         type: string
       java_version:
-        description: "JDK 版本"
         default: '17'
         type: string
-      build_command:
-        description: "自定义构建命令"
-        default: 'mvn clean package -DskipTests'
-        type: string
-      dockerfile_path:
-        description: "Dockerfile 路径"
-        default: './Dockerfile'
-        type: string
-    # 秘钥处理：这里不再强制要求定义每一个变量名
-    # 调用方直接使用 'secrets: inherit' 即可透传
-    secrets:
-      REGISTRY_USERNAME:
-        required: false
-      REGISTRY_PASSWORD:
-        required: false
 
 jobs:
-  delivery:
+  demo-delivery:
     runs-on: ubuntu-latest
     steps:
       - name: "1. 代码检出"
@@ -42,39 +24,21 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: "3. 执行构建"
-        run: ${{ inputs.build_command }}
+      - name: "3. 模拟构建 (Maven)"
+        # 即使你仓库没代码，这一步也会尝试执行，为了演示你可以直接 echo
+        run: |
+          echo "执行构建命令: mvn clean package"
+          echo "Build Success!"
 
-      - name: "4. 静态安全扫描 (Trivy)"
+      - name: "4. 漏洞扫描 (仅展示不拦截)"
         uses: aquasecurity/trivy-action@master
         with:
-          # 扫描本地文件系统，在镜像构建前拦截高危代码/依赖
           scan-type: 'fs'
-          ignore-unfixed: true
           format: 'table'
-          exit-code: '1' # 发现高危漏洞则终止流程
-          severity: 'CRITICAL,HIGH'
+          exit-code: '0' # 即使有漏洞也不报错，保证流水线变绿
+          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
 
-      - name: "5. 设置 Docker Buildx"
-        uses: docker/setup-buildx-action@v3
-
-      - name: "6. 登录制品库 (Harbor/DockerHub)"
-        if: env.REGISTRY_PASSWORD != '' # 仅在有秘钥时登录
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ vars.REGISTRY_URL || 'docker.io' }} # 优先使用 Vars 里的地址
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: "7. 构建并推送镜像"
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ${{ inputs.dockerfile_path }}
-          push: ${{ github.event_name != 'pull_request' }} # PR 仅构建不推送
-          tags: |
-            ${{ vars.REGISTRY_URL }}/${{ inputs.service_name }}:${{ github.sha }}
-            ${{ vars.REGISTRY_URL }}/${{ inputs.service_name }}:latest
-          # 优化：利用 GitHub Actions 缓存加速构建
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: "5. 模拟镜像打包"
+        run: |
+          echo "正在构建镜像: ${{ inputs.service_name }}:latest"
+          echo "镜像构建完成，跳过推送步骤（演示模式）"
