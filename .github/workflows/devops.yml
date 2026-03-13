@@ -1,0 +1,14 @@
+name: DevOps Auto Pipeline
+
+on:
+  push:
+    branches: [ "main", "feature/**" ]
+
+jobs:
+  central-delivery:
+    # 引用你中央仓库定义的标准工作流
+    uses: zentrix566/my-devops-core/.github/workflows/standard-build.yml@main
+    with:
+      service_name: "my-devops-core"
+    secrets:
+      inherit
