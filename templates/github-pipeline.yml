@@ -9,6 +9,6 @@ jobs:
     # 引用你中央仓库定义的标准工作流
     uses: zentrix566/my-devops-core/.github/workflows/standard-build.yml@main
     with:
-      app_name: {{APP_NAME}}
+      service_name: "{{APP_NAME}}"
     secrets:
       inherit
