@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{APP_NAME}}
+  labels:
+    app: {{APP_NAME}}
+    managed-by: devops-core  # 标记这是由你的自动化系统管理的
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: {{APP_NAME}}
+  template:
+    metadata:
+      labels:
+        app: {{APP_NAME}}
+    spec:
+      containers:
+      - name: app-container
+        image: registry.cn-beijing.aliyuncs.com/my-project/{{APP_NAME}}:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
