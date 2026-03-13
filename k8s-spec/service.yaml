@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-devops-core-svc
+  name: {{APP_NAME}}-svc
 spec:
   selector:
-    app: my-devops-core
+    app: {{APP_NAME}}
   ports:
     - protocol: TCP
       port: 80

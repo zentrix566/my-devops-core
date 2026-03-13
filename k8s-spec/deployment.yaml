@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-devops-core
+  name: {{APP_NAME}}
   labels:
-    app: my-devops-core
+    app: {{APP_NAME}}
     managed-by: devops-core  # 标记这是由你的自动化系统管理的
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: my-devops-core
+      app: {{APP_NAME}}
   template:
     metadata:
       labels:
-        app: my-devops-core
+        app: {{APP_NAME}}
     spec:
       containers:
       - name: app-container
-        image: registry.cn-beijing.aliyuncs.com/my-project/my-devops-core:latest
+        image: registry.cn-beijing.aliyuncs.com/my-project/{{APP_NAME}}:latest
         ports:
         - containerPort: 8080
         resources:
