@@ -1,9 +1,5 @@
 name: "Enterprise Java Delivery Pipeline"
 
-# 1. 彻底消除 Node.js 20 警告：提到最顶层
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   workflow_call:
     inputs:
