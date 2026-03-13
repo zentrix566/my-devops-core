@@ -2,6 +2,7 @@ name: "Enterprise Java Delivery Pipeline"
 
 on:
   workflow_call:
+    # inputs 和 secrets 是 workflow_call 的同级子节点
     inputs:
       service_name:
         description: "微服务名称"
@@ -15,6 +16,13 @@ on:
         description: "自定义构建命令"
         default: 'mvn clean package -DskipTests'
         type: string
+    secrets:
+      MAVEN_REPO_PASSWORD:
+        description: "Maven私服密码"
+        required: false
+      DOCKER_TOKEN:
+        description: "Docker镜像仓库令牌"
+        required: false
 
 jobs:
   delivery:
