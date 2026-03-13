@@ -41,7 +41,6 @@ def init_project():
         ("github-pipeline.yml", ".github/workflows/devops.yml")
     ]
 
-    # --- 找回你的详细同步清单 ---
     success_count = 0
     for src_rel, dst_rel in files_to_sync:
         src = os.path.join(templates_path, src_rel)
@@ -54,7 +53,7 @@ def init_project():
             new_content = content.replace("{{APP_NAME}}", project_name)
             with open(dst, 'w', encoding='utf-8') as f:
                 f.write(new_content)
-            print(f"✅ 已同步: {dst_rel}") # 恢复详细打印
+            print(f"✅ 已同步: {dst_rel}") 
             success_count += 1
         else:
             print(f"⚠️  跳过: 找不到 {src_rel}")
