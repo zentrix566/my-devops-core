@@ -6,10 +6,13 @@ on:
 
 jobs:
   build-and-deploy:
-    # 引用你中央仓库定义的标准工作流
+    # 引用中央仓库定义的标准工作流
     uses: zentrix566/my-devops-core/.github/workflows/standard-build.yml@main
     with:
-      app_name: my-devops-core
+      # 关键修改：将 app_name 改为 service_name
+      service_name: "my-devops-core" 
+      java_version: "17" # 可选，因为你在定义端设置了默认值
     secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      # 注意：如果 standard-build.yml 内部没有定义对应的 secrets 接收，
+      # 建议直接使用 inherit 关键字更简洁
+      inherit
